@@ -70,4 +70,7 @@ var defaultCorsHeaders = {
   "access-control-allow-headers": "content-type, accept",
   "access-control-max-age": 10 // Seconds.
 };
+module.exports = function () {
+  return requestHandler;
+}
 
