@@ -11,9 +11,18 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var fs = require('fs');
 var querystring = require('querystring');
 var util = require('util');
 var data = { results: [] };
+var objectID = 1;
+// var firstMessage = {
+//   username: 'sam', 
+//   text: 'i love potatoes',
+//   roomname: 'lobby'
+// };
+
+// data.results.push(firstMessage);
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -30,6 +39,31 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+  fs.readFile('../client/index.html', function(error, content) {
+    if (error) {  
+      response.writeHead(500);
+      response.end();
+      console.log("Serving request type " + request.method + " for url " + request.url);
+    }
+    else {
+      response.writeHead(200, { 'Content-Type': 'text/html' });
+      console.log("Serving request type " + request.method + " for url " + request.url);
+      response.end(content, 'utf-8');
+    }
+  });
+
+    fs.readFile('../client/scripts/app.js', function(error, content) {
+    if (error) {  
+      response.writeHead(500);
+      response.end();
+      console.log("Serving request type " + request.method + " for url " + request.url);
+    }
+    else {
+      response.writeHead(200, { 'Content-Type': 'text/html' });
+      console.log("Serving request type " + request.method + " for url " + request.url);
+      response.end(content, 'utf-8');
+    }
+  });
   
   console.log("Serving request type " + request.method + " for url " + request.url);
 
@@ -45,28 +79,27 @@ var requestHandler = function(request, response) {
   // other than plain text, like JSON or HTML.
   
   headers['Content-Type'] = "text/plain";
-  // if ( response.contentType === 'application/json' ) {
-  //   headers['Content-Type'] = 'application/json';
-  // } else {
-  //   headers['Content-Type'] = "text/plain";
-  // }
-
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
 
   if ( request.method === 'GET' ) {
-    console.log(request.url)
-    if( request.url === '/classes/room1' ){
-      response.writeHead(statusCode, headers);
-      response.end(JSON.stringify(data));
-    } else if ( request.url === '/classes/messages' ) {
-      response.end(JSON.stringify(data));
-    } else {
-      statusCode = 404;
-      response.writeHead(statusCode, headers);
-      response.end();
-    }
+    console.log(request.url);
+    //capture info after URL
+    //use that info to sort our data to be returned
+    response.writeHead(statusCode, headers);
+    console.log('in get request: ', JSON.stringify(data));
+    response.end(JSON.stringify(data));
+    // if( request.url === '/classes/room1' ){
+    //   response.writeHead(statusCode, headers);
+    //   response.end(JSON.stringify(data));
+    // } else if ( request.url === '/classes/messages' ) {
+    //   response.end(JSON.stringify(data));
+    // } else {
+    //   statusCode = 404;
+    //   response.writeHead(statusCode, headers);
+    //   response.end();
+    //}
   } else if ( request.method === 'POST' ) {
     statusCode = 201;
     var decodedBody;
@@ -76,9 +109,18 @@ var requestHandler = function(request, response) {
       fullBody += chunk.toString();
     });  
     request.on('end', function () {
-      data.results.push(JSON.parse(fullBody.toString()));
+      var obj = JSON.parse(fullBody.toString());
+      obj.objectID = objectID;
+      objectID++;
+      data.results.push(obj);
+      console.log('post request this is our parsable string: ', fullBody.toString());
+      console.log('wtf, shouldnt our data not be empty: ', data);
     });
     response.end("post request success!");
+    console.log('post request made, heres our data: ', data);
+  } else if ( request.method === 'OPTIONS' ) {
+    response.writeHead(statusCode, headers);
+    response.end();
   }
 
   // Make sure to always call response.end() - Node may not send
